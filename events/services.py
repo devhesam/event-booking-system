@@ -77,6 +77,7 @@ class BookingService:
     @classmethod
     def confirm_booking(cls, *, user, booking_id):
         now = timezone.now()
+        booking_is_expired = False
 
         with transaction.atomic():
             booking = (
@@ -101,15 +102,18 @@ class BookingService:
                 booking.expired_at = now
                 booking.save(update_fields=["status", "expired_at", "updated_at"])
 
-                raise exceptions.ParseError(
-                    get_message(messages.ERROR_BOOKING_EXPIRED)
-                )
+                booking_is_expired = True
+            else:
+                booking.status = BookingStatus.CONFIRMED
+                booking.confirmed_at = now
+                booking.save(update_fields=["status", "confirmed_at", "updated_at"])
 
-            booking.status = BookingStatus.CONFIRMED
-            booking.confirmed_at = now
-            booking.save(update_fields=["status", "confirmed_at", "updated_at"])
+                return booking
 
-            return booking
+        if booking_is_expired:
+            raise exceptions.ParseError(
+                get_message(messages.ERROR_BOOKING_EXPIRED)
+            )
 
     @classmethod
     def cancel_booking(cls, *, user, booking_id):

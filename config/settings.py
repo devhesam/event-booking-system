@@ -15,6 +15,7 @@ import logging
 import sentry_sdk
 from corsheaders.defaults import default_headers
 from decouple import config, Csv
+from celery.schedules import crontab
 
 from sentry_sdk.integrations.django import DjangoIntegration
 from sentry_sdk.integrations.logging import LoggingIntegration
@@ -140,6 +141,15 @@ MEDIA_URL = '/media/'
 
 CELERY_BROKER_URL = config('CELERY_BROKER_URL', '')
 CELERY_TASK_ALWAYS_EAGER = config('CELERY_TASK_ALWAYS_EAGER', default=False, cast=bool)
+
+CELERY_TIMEZONE = TIME_ZONE
+CELERY_ENABLE_UTC = True
+CELERY_BEAT_SCHEDULE = {
+    "expire-pending-bookings-every-minute": {
+        "task": "events.tasks.expire_pending_bookings",
+        "schedule": crontab(minute="*/1"),
+    },
+}
 
 REST_FRAMEWORK = {
     'PAGE_SIZE': config('PAGINATION_PAGE_SIZE', default=10, cast=int),

@@ -1,26 +1,35 @@
-install-requirements:
+install:
 	pip install --upgrade pip
-	pip install -r requirements.txt -U
+	pip install -r requirements.txt
+
+migrate:
+	python manage.py migrate
 
 server:
-	python manage.py migrate && python manage.py runserver
+	python manage.py runserver
 
-run-celery-server:
-	celery -A config worker --loglevel DEBUG -Q celery,config_send_user_account_per_url_webhook  --concurrency=1
+check:
+	python3 manage.py check
 
-makemessages:
-	python manage.py makemessages -l fa --ignore venv
+test:
+	pytest -v
 
-compilemessages:
-	python manage.py compilemessages -l fa
+test-bookings:
+	pytest events/tests/test_booking.py -v
+
+worker:
+	celery -A config worker -l info
+
+beat:
+	celery -A config beat -l info
+
+shell:
+	python manage.py shell
+
+makemigrations:
+	python manage.py makemigrations
 
 clean-pyc:
 	find . -name '*.pyc' -exec rm -f {} +
 	find . -name '*.pyo' -exec rm -f {} +
-	find . -name '*~' -exec rm -f {} +
-
-test:
-	python manage.py test
-
-flake8:
-	. venv/bin/activate && flake8
+	find . -name '__pycache__' -type d -exec rm -rf {} +

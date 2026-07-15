@@ -12,7 +12,7 @@ from utils.message_handler.handler import get_message
 
 
 class EventCreateAPIView(APIView):
-    # permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
         serializer = EventCreateSerializer(data=request.data)

@@ -16,15 +16,7 @@ class EventCreateAPIView(APIView):
 
     def post(self, request):
         serializer = EventCreateSerializer(data=request.data)
-
-        if not serializer.is_valid():
-            response = get_message(messages.ERROR_VALIDATION)
-            response["errors"] = serializer.errors
-
-            return Response(
-                response,
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        serializer.is_valid(raise_exception=True)
 
         event = serializer.save()
         response_serializer = EventDetailSerializer(event)

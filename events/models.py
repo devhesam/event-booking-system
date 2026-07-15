@@ -4,6 +4,10 @@ from django.conf import settings
 from django.db import models
 from django.db.models import Q
 from django.utils import timezone
+from django.contrib.auth import get_user_model
+
+
+User = get_user_model()
 
 
 class Event(models.Model):
@@ -61,7 +65,7 @@ def default_booking_expiration():
 
 
 class Booking(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="bookings")
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="bookings")
     event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name="bookings")
 
     status = models.CharField(max_length=20, choices=BookingStatus.choices, default=BookingStatus.PENDING)

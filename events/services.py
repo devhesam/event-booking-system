@@ -8,7 +8,6 @@ from events.models import Booking, BookingStatus, Event
 from utils.message_handler.handler import get_message
 from utils.message_handler import messages
 
-
 ACTIVE_BOOKING_STATUSES = [
     BookingStatus.PENDING,
     BookingStatus.CONFIRMED,
@@ -111,9 +110,7 @@ class BookingService:
                 return booking
 
         if booking_is_expired:
-            raise exceptions.ParseError(
-                get_message(messages.ERROR_BOOKING_EXPIRED)
-            )
+            raise exceptions.ParseError(get_message(messages.ERROR_BOOKING_EXPIRED))
 
     @classmethod
     def cancel_booking(cls, *, user, booking_id):
@@ -154,3 +151,52 @@ class BookingService:
             expired_at=now,
             updated_at=now,
         )
+
+    @classmethod
+    def prepare_confirm_booking_async(cls, *, user, booking_id):
+        now = timezone.now()
+        booking_is_expired = False
+
+        with transaction.atomic():
+            booking = Booking.objects.select_for_update().select_related("event").filter(id=booking_id,
+                                                                                         user=user).first()
+
+            if booking is None:
+                raise exceptions.NotFound(
+                    get_message(messages.ERROR_BOOKING_NOT_FOUND)
+                )
+
+            if booking.status != BookingStatus.PENDING:
+                raise exceptions.ParseError(get_message(messages.ERROR_INVALID_BOOKING_STATE))
+
+            if booking.expires_at <= now:
+                booking.status = BookingStatus.EXPIRED
+                booking.expired_at = now
+                booking.save(update_fields=["status", "expired_at", "updated_at"])
+
+                booking_is_expired = True
+
+        if booking_is_expired:
+            raise exceptions.ParseError(
+                get_message(messages.ERROR_BOOKING_EXPIRED)
+            )
+
+        return booking
+
+    @classmethod
+    def prepare_cancel_booking_async(cls, *, user, booking_id):
+        with transaction.atomic():
+            booking = Booking.objects.select_for_update().select_related("event").filter(id=booking_id,
+                                                                                         user=user).first()
+
+            if booking is None:
+                raise exceptions.NotFound(
+                    get_message(messages.ERROR_BOOKING_NOT_FOUND)
+                )
+
+            if booking.status not in ACTIVE_BOOKING_STATUSES:
+                raise exceptions.ParseError(
+                    get_message(messages.ERROR_INVALID_BOOKING_STATE)
+                )
+
+        return booking

@@ -1,3 +1,4 @@
+from constance import config
 from rest_framework import exceptions, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -5,12 +6,13 @@ from rest_framework.views import APIView
 from events.models import Event
 from events.serializers import (BookingSerializer, EventCreateSerializer, EventDetailSerializer)
 from events.services import BookingService
+from events.tasks import cancel_booking_task, confirm_booking_task
 from utils.message_handler import messages
 from utils.message_handler.handler import get_message
 
 
 class EventCreateAPIView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
+    # permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
         serializer = EventCreateSerializer(data=request.data)
@@ -91,6 +93,27 @@ class ConfirmBookingAPIView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, booking_id):
+        if config.CONFIRM_BOOKING_ASYNC:
+            booking = BookingService.prepare_confirm_booking_async(
+                user=request.user,
+                booking_id=booking_id,
+            )
+
+            confirm_booking_task.delay(
+                user_id=request.user.id,
+                booking_id=booking.id,
+            )
+
+            serializer = BookingSerializer(booking)
+
+            response = get_message(messages.SUCCESS_BOOKING_CONFIRM_QUEUED)
+            response["data"] = serializer.data
+
+            return Response(
+                response,
+                status=status.HTTP_202_ACCEPTED,
+            )
+
         booking = BookingService.confirm_booking(
             user=request.user,
             booking_id=booking_id,
@@ -111,6 +134,27 @@ class CancelBookingAPIView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, booking_id):
+        if config.CANCEL_BOOKING_ASYNC:
+            booking = BookingService.prepare_cancel_booking_async(
+                user=request.user,
+                booking_id=booking_id,
+            )
+
+            cancel_booking_task.delay(
+                user_id=request.user.id,
+                booking_id=booking.id,
+            )
+
+            serializer = BookingSerializer(booking)
+
+            response = get_message(messages.SUCCESS_BOOKING_CANCEL_QUEUED)
+            response["data"] = serializer.data
+
+            return Response(
+                response,
+                status=status.HTTP_202_ACCEPTED,
+            )
+
         booking = BookingService.cancel_booking(
             user=request.user,
             booking_id=booking_id,

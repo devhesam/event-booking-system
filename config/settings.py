@@ -23,7 +23,6 @@ from sentry_sdk.integrations.logging import LoggingIntegration
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
@@ -32,7 +31,6 @@ SECRET_KEY = config('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config("DEBUG", default=False, cast=bool)
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost', cast=Csv())
-
 
 # Application definition
 
@@ -43,6 +41,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'constance',
+    'constance.backends.database',
     'rest_framework',
     'events.apps.EventsConfig',
 ]
@@ -75,7 +75,6 @@ TEMPLATES = [
     },
 ]
 WSGI_APPLICATION = 'config.wsgi.application'
-
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
@@ -125,7 +124,6 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 
 USE_TZ = True
-
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
@@ -255,17 +253,21 @@ CONSTANCE_ADDITIONAL_FIELDS = {
     'percent_field': ['django.forms.IntegerField', {'min_value': 1, 'max_value': 100}],
     'positive_integer': ['django.forms.IntegerField', {'min_value': 1}],
     'char_field_optional': ['django.forms.CharField', {'required': False}],
+    'bool_field': ['django.forms.BooleanField', {}],
 }
 
 CONSTANCE_CONFIG = {
+    'CONFIRM_BOOKING_ASYNC': (
+        False,
+        'If enabled, confirm booking requests will be processed asynchronously by Celery.',
+        'bool_field'
+    ),
+    'CANCEL_BOOKING_ASYNC': (False, 'If enabled, cancel booking requests will be processed asynchronously by Celery.',
+                             'bool_field'),
 }
 
 CONSTANCE_CONFIG_FIELDSETS = {
-    'General': ['VERIFICATION_EMAIL_BASE_URL', 'VERIFICATION_TOKEN_EXPIRE_TIME'],
-    'SMS Provider': ['SMS_PROVIDER_TOKEN', 'SMS_PROVIDER_BASE_URL', 'SMS_PROVIDER_CONNECTION_TIMEOUT'],
-    'EMAIL Provider': ['EMAIL_PROVIDER_TOKEN', 'EMAIL_PROVIDER_BASE_URL', 'EMAIL_PROVIDER_CONNECTION_TIMEOUT',
-                       'EMAIL_PROVIDER_SMTP_ID'],
-    'OTP CONFIG': ['OTP_CODE_MAX_LENGTH', 'OTP_LIFE_TIME'],
+    'Booking Flow': ['CONFIRM_BOOKING_ASYNC', 'CANCEL_BOOKING_ASYNC'],
 }
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

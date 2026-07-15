@@ -1,6 +1,5 @@
 from django.utils.translation import gettext_lazy as _
 
-
 """ Success message codes: Range [2000 - 2999] """
 
 SUCCESS_EVENT_CREATED = 2000
@@ -10,6 +9,8 @@ SUCCESS_BOOKING_ALREADY_EXISTS = 2003
 SUCCESS_BOOKING_CONFIRMED = 2004
 SUCCESS_BOOKING_CANCELLED = 2005
 SUCCESS_BOOKING_EXPIRED = 2006
+SUCCESS_BOOKING_CONFIRM_QUEUED = 2007
+SUCCESS_BOOKING_CANCEL_QUEUED = 2008
 
 SUCCESS_MESSAGE_CODES = {
     SUCCESS_EVENT_CREATED: _("Event created successfully."),
@@ -19,8 +20,9 @@ SUCCESS_MESSAGE_CODES = {
     SUCCESS_BOOKING_CONFIRMED: _("Booking confirmed successfully."),
     SUCCESS_BOOKING_CANCELLED: _("Booking cancelled successfully."),
     SUCCESS_BOOKING_EXPIRED: _("Booking expired successfully."),
+    SUCCESS_BOOKING_CONFIRM_QUEUED: _("Booking confirmation has been queued successfully."),
+    SUCCESS_BOOKING_CANCEL_QUEUED: _("Booking cancellation has been queued successfully."),
 }
-
 
 """ Error message codes: Range [4000 - 4999] """
 
@@ -53,7 +55,6 @@ ERROR_MESSAGE_CODES = {
     ERROR_INVALID_BOOKING_STATE: _("Invalid booking state."),
     ERROR_BOOKING_EXPIRED: _("Booking has expired."),
 }
-
 
 MESSAGE_CODES = {
     **SUCCESS_MESSAGE_CODES,
